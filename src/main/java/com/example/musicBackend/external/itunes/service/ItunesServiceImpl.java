@@ -103,6 +103,8 @@ public class ItunesServiceImpl implements ItunesService {
                 .durationMs(itunesTrack.getTrackTimeMillis() != null ? itunesTrack.getTrackTimeMillis().intValue() : null)
                 .albumCoverUrl(itunesTrack.getArtworkUrl100())
                 .releaseDate(itunesTrack.getReleaseDate())
+                .previewUrl(itunesTrack.getPreviewUrl())
+                .primaryGenreName(itunesTrack.getPrimaryGenreName())
                 .build();
     }
 
@@ -114,7 +116,9 @@ public class ItunesServiceImpl implements ItunesService {
                 itunesTrack.getCollectionName(),
                 itunesTrack.getTrackTimeMillis() != null ? itunesTrack.getTrackTimeMillis().intValue() : 0,
                 itunesTrack.getArtworkUrl100(),
-                itunesTrack.getReleaseDate()
+                itunesTrack.getReleaseDate(),
+                itunesTrack.getPreviewUrl(),
+                itunesTrack.getPrimaryGenreName()
         );
     }
 }

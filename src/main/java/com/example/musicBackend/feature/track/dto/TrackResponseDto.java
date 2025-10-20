@@ -10,7 +10,9 @@ public record TrackResponseDto(
         String album,
         Integer durationMs,
         String albumCoverUrl,
-        String releaseDate
+        String releaseDate,
+        String previewUrl,
+        String primaryGenreName
 ) {
     public static TrackResponseDto from(Track track) {
         return new TrackResponseDto(
@@ -21,7 +23,9 @@ public record TrackResponseDto(
                 track.getAlbum(),
                 track.getDurationMs(),
                 track.getAlbumCoverUrl(),
-                track.getReleaseDate()
+                track.getReleaseDate(),
+                track.getPreviewUrl(),
+                track.getPrimaryGenreName()
         );
     }
 }

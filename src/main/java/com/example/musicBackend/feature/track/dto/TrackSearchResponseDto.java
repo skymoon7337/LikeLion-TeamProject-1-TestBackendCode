@@ -7,6 +7,8 @@ public record TrackSearchResponseDto(
         String album,
         Integer durationMs,
         String albumCoverUrl,
-        String releaseDate
+        String releaseDate,
+        String previewUrl,
+        String primaryGenreName
 ) {
 }

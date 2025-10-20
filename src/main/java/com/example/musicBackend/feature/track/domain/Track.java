@@ -40,12 +40,15 @@ public class Track {
 
     private Integer durationMs;
 
-
     private String albumCoverUrl;
 
     private String releaseDate;
 
     private LocalDateTime cachedAt;
+
+    private String previewUrl;
+
+    private String primaryGenreName;
 
     @PrePersist
     protected void onCreate() {
