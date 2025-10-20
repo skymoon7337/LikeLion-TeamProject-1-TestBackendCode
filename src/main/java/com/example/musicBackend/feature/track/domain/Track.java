@@ -29,7 +29,7 @@ public class Track {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String spotifyTrackId;
+    private Long trackId;
 
     @Column(nullable = false)
     private String title;
@@ -40,7 +40,6 @@ public class Track {
 
     private Integer durationMs;
 
-    private Integer popularity;
 
     private String albumCoverUrl;
 

@@ -12,7 +12,7 @@ public interface PlaylistService {
     PlaylistResponseDto getPlaylist(Long playlistId);
     PlaylistResponseDto updatePlaylist(Long playlistId, Long userId, PlaylistRequestDto request);
     void deletePlaylist(Long playlistId, Long userId);
-    PlaylistResponseDto addTrackToPlaylist(Long playlistId, Long userId, String spotifyTrackId);
+    PlaylistResponseDto addTrackToPlaylist(Long playlistId, Long userId, Long trackId);
     void removeTrackFromPlaylist(Long playlistId, Long userId, Long trackId);
     PlaylistResponseDto updateTrackPosition(Long playlistId, Long userId, Long trackId, Integer newPosition);
 }

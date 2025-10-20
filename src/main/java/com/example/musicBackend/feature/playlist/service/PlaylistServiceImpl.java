@@ -1,6 +1,6 @@
 package com.example.musicBackend.feature.playlist.service;
 
-import com.example.musicBackend.external.spotify.service.SpotifyService;
+import com.example.musicBackend.external.itunes.service.ItunesService;
 import com.example.musicBackend.feature.playlist.domain.Playlist;
 import com.example.musicBackend.feature.playlist.domain.PlaylistTrack;
 import com.example.musicBackend.feature.playlist.domain.PlaylistVisibility;
@@ -34,7 +34,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     private final PlaylistTrackRepository playlistTrackRepository;
     private final PlaylistVisibilityRepository playlistVisibilityRepository;
     private final UserRepository userRepository;
-    private final SpotifyService spotifyService;
+    private final ItunesService itunesService;
 
     /**
      * 플레이리스트 생성
@@ -162,8 +162,8 @@ public class PlaylistServiceImpl implements PlaylistService {
      */
     @Override
     @Transactional
-    public PlaylistResponseDto addTrackToPlaylist(Long playlistId, Long userId, String spotifyTrackId) {
-        log.info("트랙 추가 - playlistId: {}, spotifyTrackId: {}", playlistId, spotifyTrackId);
+    public PlaylistResponseDto addTrackToPlaylist(Long playlistId, Long userId, Long trackId) {
+        log.info("트랙 추가 - playlistId: {}, trackId: {}", playlistId, trackId);
 
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
@@ -173,12 +173,11 @@ public class PlaylistServiceImpl implements PlaylistService {
             throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
         }
 
-        Track track = spotifyService.getOrCreateTrackEntity(spotifyTrackId);
+        Track track = itunesService.getOrCreateTrackEntity(trackId);
 
         // 중복 체크
-        boolean alreadyExists = playlistTrackRepository
-                .findByPlaylistIdAndTrackId(playlistId, track.getId())
-                .isPresent();
+        boolean alreadyExists = playlist.getPlaylistTracks().stream()
+                .anyMatch(pt -> pt.getTrack().getId().equals(track.getId()));
 
         if (alreadyExists) {
             throw new IllegalArgumentException("이미 플레이리스트에 추가된 곡입니다.");
@@ -193,16 +192,10 @@ public class PlaylistServiceImpl implements PlaylistService {
                 .position(nextPosition)
                 .build();
 
-//1 : DB에 playlistTrack을 저장했지만, 메모리 상의 playlist 객체 컬렉션은 자동으로 갱신되지 않음 (JPA 영속성 컨텍스트 및 양방향 관계 관리 특성)
-        playlistTrackRepository.save(playlistTrack);
-//3 : 메모리(JPA 영속성 컨테이너)상에 있는 playlist 객체로부터 PlaylistTrack들의 컬렉션(List)을 가져옴
-//3 : 위에서 DB에 저장한 새로운 playlistTrack 객체를 메모리(JPA 영속성 컨테이너)에 저장함 (양방향 관계의 일관성을 유지)
         playlist.getPlaylistTracks().add(playlistTrack);
+        playlistTrackRepository.save(playlistTrack);
         log.info("곡 추가 완료");
 
-//2 : 새로 고침해서 반환한다. tracks까지 한 번에 조회해서 Lazy Loading 문제 해결
-        playlist = playlistRepository.findByIdWithTracks(playlistId)
-                .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
         return PlaylistResponseDto.from(playlist);
     }
 

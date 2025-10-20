@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface TrackRepository extends JpaRepository<Track, Long> {
-    Optional<Track> findBySpotifyTrackId(String spotifyTrackId);
+    Optional<Track> findByTrackId(Long trackId);
 }

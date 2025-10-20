@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 테스트 시나리오:
  * 1. 회원가입
  * 2. 로그인
- * 3. 노래 검색 (Spotify API)
+ * 3. 노래 검색 (iTunes API)
  * 4. 플레이리스트 생성
  * 5. 플레이리스트에 곡 3개 추가
  * 6. 첫 번째 곡을 마지막으로 순서 변경
@@ -79,8 +79,8 @@ class FlowIntegrationTest {
     private static Long userId;
     private static Long userId2; // For permission test
     private static Long playlistId;
-    private static List<String> spotifyTrackIds = new ArrayList<>();
-    private static List<Long> trackIds = new ArrayList<>();
+    private static List<Long> trackIdsToAdd = new ArrayList<>();
+    private static List<Long> createdTrackIds = new ArrayList<>();
 
     @Test
     @Order(1)
@@ -143,17 +143,17 @@ class FlowIntegrationTest {
         String searchQuery = "BTS";
 
         // when & then
-        MvcResult result = mockMvc.perform(get("/api/spotify/search")
-                        .param("q", searchQuery))
+        MvcResult result = mockMvc.perform(get("/api/itunes/search")
+                        .param("query", searchQuery))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].spotifyTrackId").exists())
+                .andExpect(jsonPath("$[0].trackId").exists())
                 .andExpect(jsonPath("$[0].title").exists())
                 .andExpect(jsonPath("$[0].artist").exists())
                 .andReturn();
 
-        // spotifyTrackId 3개 저장 (곡 추가용)
+        // trackId 3개 저장 (곡 추가용)
         String responseBody = result.getResponse().getContentAsString();
         List<TrackSearchResponseDto> tracks = objectMapper.readValue(
                 responseBody,
@@ -161,9 +161,9 @@ class FlowIntegrationTest {
         );
 
         assertThat(tracks).hasSizeGreaterThanOrEqualTo(3);
-        spotifyTrackIds.add(tracks.get(0).spotifyTrackId());
-        spotifyTrackIds.add(tracks.get(1).spotifyTrackId());
-        spotifyTrackIds.add(tracks.get(2).spotifyTrackId());
+        trackIdsToAdd.add(Long.valueOf(tracks.get(0).trackId()));
+        trackIdsToAdd.add(Long.valueOf(tracks.get(1).trackId()));
+        trackIdsToAdd.add(Long.valueOf(tracks.get(2).trackId()));
 
         System.out.println("✅ Step 3 완료: 노래 검색 성공 (결과 " + tracks.size() + "개)");
         System.out.println("   - 곡 1: " + tracks.get(0).title() + " - " + tracks.get(0).artist());
@@ -212,7 +212,7 @@ class FlowIntegrationTest {
     void step5_플레이리스트에_곡_3개_추가() throws Exception {
         // 곡 3개 추가
         for (int i = 0; i < 3; i++) {
-            AddTrackRequestDto addTrackRequest = new AddTrackRequestDto(spotifyTrackIds.get(i));
+            AddTrackRequestDto addTrackRequest = new AddTrackRequestDto(trackIdsToAdd.get(i));
 
             MvcResult result = mockMvc.perform(post("/api/playlists/{playlistId}/tracks", playlistId)
                             .param("userId", userId.toString())
@@ -232,7 +232,7 @@ class FlowIntegrationTest {
 
                 // trackId 저장 (순서 변경, 삭제용)
                 for (var track : response.tracks()) {
-                    trackIds.add(track.id());
+                    createdTrackIds.add(track.id());
                 }
 
                 // position 확인
@@ -250,7 +250,7 @@ class FlowIntegrationTest {
     @DisplayName("Step 6: 첫 번째 곡을 마지막으로 이동")
     void step6_첫번째_곡을_마지막으로_이동() throws Exception {
         // given - 첫 번째 곡(position 0)을 마지막(position 2)으로
-        Long firstTrackId = trackIds.get(0);
+        Long firstTrackId = createdTrackIds.get(0);
 
         // when & then
         MvcResult result = mockMvc.perform(put("/api/playlists/{playlistId}/tracks/{trackId}/position", playlistId, firstTrackId)
@@ -266,9 +266,9 @@ class FlowIntegrationTest {
         PlaylistResponseDto response = objectMapper.readValue(responseBody, PlaylistResponseDto.class);
 
         assertThat(response.tracks()).hasSize(3);
-        assertThat(response.tracks().get(0).id()).isEqualTo(trackIds.get(1)); // 원래 2번째
-        assertThat(response.tracks().get(1).id()).isEqualTo(trackIds.get(2)); // 원래 3번째
-        assertThat(response.tracks().get(2).id()).isEqualTo(trackIds.get(0)); // 원래 1번째
+        assertThat(response.tracks().get(0).id()).isEqualTo(createdTrackIds.get(1)); // 원래 2번째
+        assertThat(response.tracks().get(1).id()).isEqualTo(createdTrackIds.get(2)); // 원래 3번째
+        assertThat(response.tracks().get(2).id()).isEqualTo(createdTrackIds.get(0)); // 원래 1번째
 
         // position도 0, 1, 2로 올바르게 설정되었는지
         assertThat(response.tracks().get(0).position()).isEqualTo(0);

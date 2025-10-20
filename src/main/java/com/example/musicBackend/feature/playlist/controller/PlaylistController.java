@@ -98,7 +98,7 @@ public class PlaylistController {
             @PathVariable Long playlistId,
             @RequestParam Long userId,
             @RequestBody AddTrackRequestDto request) {
-        PlaylistResponseDto playlist = playlistService.addTrackToPlaylist(playlistId, userId, request.spotifyTrackId());
+        PlaylistResponseDto playlist = playlistService.addTrackToPlaylist(playlistId, userId, request.trackId());
         return ResponseEntity.ok(playlist);
     }
 
