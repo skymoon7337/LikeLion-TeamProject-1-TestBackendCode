@@ -1,8 +1,8 @@
 package com.example.musicBackend.feature.playlist.controller;
 
 import com.example.musicBackend.feature.playlist.dto.AddTrackRequestDto;
-import com.example.musicBackend.feature.playlist.dto.PlaylistResponseDto;
 import com.example.musicBackend.feature.playlist.dto.PlaylistRequestDto;
+import com.example.musicBackend.feature.playlist.dto.PlaylistResponseDto;
 import com.example.musicBackend.feature.playlist.service.PlaylistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -62,8 +62,10 @@ public class PlaylistController {
      * 특정 플레이리스트 조회
      */
     @GetMapping("/{playlistId}")
-    public ResponseEntity<PlaylistResponseDto> getPlaylist(@PathVariable Long playlistId) {
-        PlaylistResponseDto playlist = playlistService.getPlaylist(playlistId);
+    public ResponseEntity<PlaylistResponseDto> getPlaylist(
+            @PathVariable Long playlistId,
+            @RequestParam(required = false) Long userId) {
+        PlaylistResponseDto playlist = playlistService.getPlaylist(playlistId, userId);
         return ResponseEntity.ok(playlist);
     }
 

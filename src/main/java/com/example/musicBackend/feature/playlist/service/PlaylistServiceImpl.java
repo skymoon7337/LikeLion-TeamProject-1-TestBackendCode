@@ -91,9 +91,47 @@ public class PlaylistServiceImpl implements PlaylistService {
      */
     @Override
     @Transactional(readOnly = true)
-    public PlaylistResponseDto getPlaylist(Long playlistId) {
+    public PlaylistResponseDto getPlaylist(Long playlistId, Long requesterId) {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
+
+        // ===== 🔐 권한 검사 로직 추가 =====
+        Visibility visibility = playlist.getVisibility();
+        Long ownerId = playlist.getUser().getId();
+
+        // 1. PUBLIC: 모두 접근 가능 → 아무 검사 없이 통과
+        if (visibility == Visibility.PUBLIC) {
+            // 공개 플레이리스트는 누구나 볼 수 있음
+            return PlaylistResponseDto.from(playlist);
+        }
+
+        // 2. PRIVATE: 소유자만 접근 가능
+        if (visibility == Visibility.PRIVATE) {
+            if (!ownerId.equals(requesterId)) {
+                throw new RuntimeException("비공개 플레이리스트는 작성자만 볼 수 있습니다.");
+            }
+            return PlaylistResponseDto.from(playlist);
+        }
+
+        // 3. SHARED: 소유자 또는 공유받은 사람만 접근 가능
+        if (visibility == Visibility.SHARED) {
+            // 소유자인 경우 통과
+            if (ownerId.equals(requesterId)) {
+                return PlaylistResponseDto.from(playlist);
+            }
+
+            // 공유 목록에 있는지 확인
+            boolean isSharedUser = playlist.getPlaylistVisibilities().stream()
+                    .anyMatch(pv -> pv.getUser().getId().equals(requesterId));
+
+            if (!isSharedUser) {
+                throw new RuntimeException("이 플레이리스트에 접근할 권한이 없습니다.");
+            }
+
+            return PlaylistResponseDto.from(playlist);
+        }
+
+        // 혹시 모를 예외 상황 (여기까지 오면 안됨)
         return PlaylistResponseDto.from(playlist);
     }
 

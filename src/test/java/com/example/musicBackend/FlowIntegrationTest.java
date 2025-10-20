@@ -11,7 +11,6 @@ import com.example.musicBackend.feature.user.dto.SignupRequestDto;
 import com.example.musicBackend.feature.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -474,7 +473,6 @@ class FlowIntegrationTest {
         System.out.println("✅ Step 12 완료: 내 플레이리스트 목록에 포함됨 확인 (PRIVATE 상태)");
     }
 
-    @Disabled("보안 기능 구현 후 활성화 예정")
     @Test
     @Order(13)
     @DisplayName("Step 13: 다른 사용자는 비공개 플레이리스트 조회 불가")
@@ -495,9 +493,9 @@ class FlowIntegrationTest {
         mockMvc.perform(get("/api/playlists/{playlistId}", playlistId)
                         .param("userId", userId2.toString())) // 다른 사용자의 ID로 조회 시도
                 .andDo(print())
-                .andExpect(status().is5xxServerError()); // 혹은 isNotFound() (404)가 더 적절함
+                .andExpect(status().is5xxServerError()); // 권한 없음 - RuntimeException으로 500 발생
 
-        System.out.println("✅ Step 13 완료: 다른 사용자의 비공개 플레이리스트 접근 실패 확인");
+        System.out.println("✅ Step 13 완료: 다른 사용자의 비공개 플레이리스트 접근 실패 확인 (500 Internal Server Error)");
     }
 
     @Test
