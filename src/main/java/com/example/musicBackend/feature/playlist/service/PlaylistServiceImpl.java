@@ -164,6 +164,8 @@ public class PlaylistServiceImpl implements PlaylistService {
             playlist.setVisibility(request.visibility());
         }
 
+        playlist.touch();
+
         Playlist updatedPlaylist = playlistRepository.save(playlist);
         boolean shouldUpdateSharedUsers = updatedPlaylist.getVisibility() != Visibility.SHARED
                 || request.sharedUserIds() != null;
@@ -234,6 +236,10 @@ public class PlaylistServiceImpl implements PlaylistService {
         playlistTrackRepository.save(playlistTrack);
         log.info("곡 추가 완료");
 
+        playlist.touch();
+        playlistRepository.save(playlist);
+        log.info("플레이리스트 갱신 완료");
+
         return PlaylistResponseDto.from(playlist);
     }
 
@@ -269,6 +275,10 @@ public class PlaylistServiceImpl implements PlaylistService {
         // 5. 삭제된 position보다 큰 곡들의 position을 -1 감소
         playlistTrackRepository.decrementPositionsAfter(playlistId, deletedPosition);
         log.info("순서 재정렬 완료 (position > {} 인 곡들 -1)", deletedPosition);
+
+        playlist.touch();
+        playlistRepository.save(playlist);
+        log.info("플레이리스트 갱신 완료");
     }
 
     /**
@@ -337,9 +347,12 @@ public class PlaylistServiceImpl implements PlaylistService {
         }
 
         playlistTrack.setPosition(newPosition);
-        playlistTrackRepository.save(playlistTrack); // 위에서 saveAll, flush 했으니 이동할 곡만 저장
-
+        playlistTrackRepository.save(playlistTrack);// 위에서 saveAll, flush 했으니 이동할 곡만 저장
         log.info("곡 순서 변경 완료");
+
+        playlist.touch();
+        playlistRepository.save(playlist);
+        log.info("플레이리스트 갱신 완료");
 
         // 새로 고침해서 반환
         playlist = playlistRepository.findById(playlistId).get();

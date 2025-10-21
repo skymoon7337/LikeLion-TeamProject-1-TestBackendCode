@@ -70,6 +70,11 @@ public class Playlist {
 
     private LocalDateTime updatedAt;
 
+    //엔티티 매니저(영속성 컨텍스트)때문에 안될때 수동 갱신 트리거
+    public void touch() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

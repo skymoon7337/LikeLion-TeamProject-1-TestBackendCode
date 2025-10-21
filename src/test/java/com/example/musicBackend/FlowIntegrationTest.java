@@ -54,8 +54,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 12. 내 플레이리스트 목록에서는 조회됨
  * 13. 다른 사용자는 비공개 플레이리스트 조회 불가
  * 14. 플레이리스트 삭제
- *
- * @포지션 변경시 연속적이 깨짐 이거 테스트코드 작성후 해결해야됨@
  */
 @SpringBootTest
 @AutoConfigureMockMvc
