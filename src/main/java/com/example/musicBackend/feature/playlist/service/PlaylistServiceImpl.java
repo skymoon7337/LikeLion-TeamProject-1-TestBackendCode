@@ -287,6 +287,12 @@ public class PlaylistServiceImpl implements PlaylistService {
             throw new RuntimeException("플레이리스트를 수정할 권한이 없습니다.");
         }
 
+        //position값 검증
+        int playlistSize = playlist.getPlaylistTracks().size();
+        if (newPosition < 0 || newPosition >= playlistSize) {
+            throw new IllegalArgumentException("요청한 position이 유효한 범위를 벗어났습니다. (유효 범위: 0 ~ " + (playlistSize - 1) + ")");
+        }
+
         PlaylistTrack playlistTrack = playlistTrackRepository.findByPlaylistIdAndTrackId(playlistId, trackId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트에 해당 곡이 없습니다."));
 
@@ -297,7 +303,7 @@ public class PlaylistServiceImpl implements PlaylistService {
             return PlaylistResponseDto.from(playlist);
         }
 
-        // 포지션 맞교환시 db에 저장할때 유니크 오류때문에 임시 해결책 (이동할 곡을 임시 position으로 이동)
+        // position 맞교환시 db에 저장할때 유니크 오류때문에 임시 해결책 (이동할 곡을 임시 position으로 이동)
         playlistTrack.setPosition(-1);
         playlistTrackRepository.save(playlistTrack);
         playlistTrackRepository.flush();  // 즉시 DB 반영
