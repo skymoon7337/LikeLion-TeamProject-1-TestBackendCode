@@ -95,7 +95,7 @@ public class PlaylistServiceImpl implements PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("플레이리스트를 찾을 수 없습니다."));
 
-        // ===== 🔐 권한 검사 로직 추가 =====
+        // ===== 권한 검사 로직 추가 =====
         Visibility visibility = playlist.getVisibility();
         Long ownerId = playlist.getUser().getId();
 
@@ -359,9 +359,13 @@ public class PlaylistServiceImpl implements PlaylistService {
         return PlaylistResponseDto.from(playlist);
     }
 
+    /**
+     * 공유 유저 목록 관리
+     */
     private void syncSharedUsers(Playlist playlist, Visibility visibility, List<Long> sharedUserIds, boolean shouldUpdateList) {
         List<PlaylistVisibility> current = new ArrayList<>(playlist.getPlaylistVisibilities());
 
+        // 공유 상태가 아니면 모든 공유 관계 삭제
         if (visibility != Visibility.SHARED) {
             if (!current.isEmpty()) {
                 playlistVisibilityRepository.deleteAll(current);
@@ -374,29 +378,31 @@ public class PlaylistServiceImpl implements PlaylistService {
             return;
         }
 
+        // 새로운 요청 목록
         Set<Long> desired = new HashSet<>(sharedUserIds != null ? sharedUserIds : Collections.emptyList());
-        // 소유자는 자동 접근 가능하므로 제외
-        desired.remove(playlist.getUser().getId());
+        desired.remove(playlist.getUser().getId());// 소유자는 자동 접근 가능하므로 제외
 
+        // 1. 제거할 사용자 찾기
         for (PlaylistVisibility pv : current) {
             Long userId = pv.getUser().getId();
             if (!desired.contains(userId)) {
                 playlistVisibilityRepository.delete(pv);
                 playlist.getPlaylistVisibilities().remove(pv);
             } else {
-                desired.remove(userId);
+                desired.remove(userId); // 중복을 피하기 위해 desired에서 제거
             }
         }
 
+        // 2. 추가할 사용자 찾기
         for (Long userId : desired) {
             User sharedUser = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("공유 대상 사용자를 찾을 수 없습니다."));
             PlaylistVisibility visibilityEntry = PlaylistVisibility.builder()
-                    .playlist(playlist)
-                    .user(sharedUser)
+                    .playlist(playlist) // 어떤 플레이리스트 공유하는지
+                    .user(sharedUser)   // 어떤 유저에게 공유할건지
                     .build();
-            playlist.getPlaylistVisibilities().add(visibilityEntry);
-            playlistVisibilityRepository.save(visibilityEntry);
+            playlist.getPlaylistVisibilities().add(visibilityEntry); // 메모리상에서 업데이트
+            playlistVisibilityRepository.save(visibilityEntry); // 업데이트한것을 DB에 저장
         }
     }
 }
